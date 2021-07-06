@@ -1,4 +1,5 @@
 import Lift from "./Lift";
+import { liftStates } from "./liftStates";
 
 export default class Button {
     protected parent: Lift;
@@ -25,26 +26,31 @@ export default class Button {
     }
 
     onClick(): void {
-        this.parent.logic.currentQueue().push(this);
-        // let r = () => this.parent.logic.currentQueue()
-        // if (this.parent.logic.currentQueue().length === 0) {
-        //     this.parent.logic.currentQueue().push(this);
-        // }
-        // else if (this.parent.logic.directionDown) {
-        //     if (this.parent.cabin.cabin.y < this.button.y)
-        //         this.parent.queue.splice(this.findNeedPos(), 0, this);
-        // }
+        if (!this.parent.logic.queueDown.includes(this) && !this.parent.logic.queueUp.includes(this)) {
+            if (this.parent.logic.currentQueue().length === 0) {
+                this.parent.logic.state = this.parent.cabin.cabin.y < this.button.y ? liftStates.down : liftStates.up;
+                this.parent.logic.currentQueue().push(this);
+            }
+            else if (this.parent.cabin.cabin.y < this.button.y)
+                this.parent.logic.queueDown.splice(this.findNeedPos(this.parent.logic.queueDown, true), 0, this);
+            else {
+                this.parent.logic.queueUp.splice(this.findNeedPos(this.parent.logic.queueUp, false), 0, this);
+            }
+        }
+
     }
 
-    // findNeedPos(): number {
-    //     for (let i = 0; i < this.parent.queue.length; i++) {
-    //         if (this.parent.queue[i].number > this.number) {
-    //             return i;
-    //         }
+    findNeedPos(queue: Button[], down: boolean): number {
+        for (let i = 0; i < queue.length; i++) {
+            if (down
+                ? queue[i].number > this.number
+                : queue[i].number < this.number) {
+                return i;
+            }
 
-    //     }
+        }
 
-    //     return this.parent.queue.length;
-    // }
+        return queue.length
+    }
 
 }

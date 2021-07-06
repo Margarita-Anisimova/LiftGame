@@ -1,7 +1,7 @@
 import "./scss/main.scss";
 import * as PIXI from "pixi.js-legacy";
 import Handlers from "./utils/handlers";
-// import Demo from "./demo/Demo";
+import Demo from "./demo/Demo";
 import Lift from "./lift/Lift";
 
 initPIXI();
@@ -14,6 +14,8 @@ start();
  */
 function start(): void {
     const lift = new Lift();
+    // const demo = new Demo();
+    // demo.start();
 }
 
 function initPIXI(): void {

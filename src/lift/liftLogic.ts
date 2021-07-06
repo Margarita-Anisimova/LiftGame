@@ -1,8 +1,9 @@
 import Lift from "./Lift";
 import Button from "./button";
+import { liftStates } from "./liftStates";
 
 export default class LiftLogic {
-    public directionDown: boolean;
+    public state: liftStates;
     private onNeedFloor: boolean;
     protected parent: Lift;
     private stop: NodeJS.Timer;
@@ -13,9 +14,9 @@ export default class LiftLogic {
     public queueDown: Button[];
 
     public currentQueue(): Button[] {
-        // return this.directionDown ? this.queueDown : this.queueUp;
-        return this.queueDown;
+        return this.state == liftStates.down ? this.queueDown : this.queueUp;
     }
+
 
     constructor(parent: any) {
         this.parent = parent;
@@ -23,13 +24,27 @@ export default class LiftLogic {
         this.startFloor = this.parent.buttons[0];
         this.inWay = false;
         this.onNeedFloor = false;
-        this.directionDown = true;
+        this.state = liftStates.stop;
         this.queueUp = [];
         this.queueDown = [];
     }
 
     start() {
         window.app.ticker.add(() => {
+            if (this.queueDown.length == 0) {
+                if (this.queueUp.length == 0) {
+                    this.state = liftStates.stop
+                }
+                else
+                    this.state = liftStates.up
+            }
+            else if (this.queueUp.length == 0) {
+                this.state = liftStates.down
+            }
+
+            // this.state = this.queueDown.length == 0 && this.queueUp.length == 0 ? liftStates.stop : this.state
+            // this.state = this.queueDown.length == 0 ? liftStates.up : this.state
+            // this.state = this.queueUp.length == 0 ? liftStates.down : this.state
             this.task = this.currentQueue()[0];
             if (!this.inWay && this.currentQueue().length != 0) {
                 this.onNeedFloor = false;
@@ -40,26 +55,36 @@ export default class LiftLogic {
                 clearInterval(this.stop);
                 this.startFloor = this.task!;
                 if (!this.onNeedFloor) {
-                    setTimeout(() => this.inWay = false, 1000);
+                    setTimeout(() => { this.inWay = false; this.currentQueue().shift(); }, 1000);
                     this.onNeedFloor = true;
-                    this.currentQueue().shift();
                 }
             }
-        });
+            // if (this.inWay) {
+            //     if (this.state == liftStates.down && this.parent.cabin.cabin.y >= this.task!.button.y
+            //         || this.state == liftStates.up && this.parent.cabin.cabin.y <= this.task!.button.y) {
+            //         clearInterval(this.stop);
+            //         this.startFloor = this.task!;
+            //         if (!this.onNeedFloor) {
+            //             setTimeout(() => { this.inWay = false; this.currentQueue().shift(); }, 1000);
+            //             this.onNeedFloor = true;
+            //         }
+            //     }
+            // }
+        })
     }
 
     update(floor: Button | undefined) {
         if (floor!.number > this.startFloor.number) {
             this.stop = setInterval(() => {
-                this.parent.cabin.cabin.y += 5;
+                this.parent.cabin.cabin.y += 5
             }, 100)
-            this.directionDown = true;
+            this.state = liftStates.down;
         }
         else {
             this.stop = setInterval(() => {
                 this.parent.cabin.cabin.y -= 5;
             }, 100)
-            this.directionDown = false;
+            this.state = liftStates.up;
         }
     }
 }
